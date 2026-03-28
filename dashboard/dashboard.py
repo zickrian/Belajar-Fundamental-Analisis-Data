@@ -11,9 +11,23 @@ st.set_page_config(
     page_title="Olist Sales Dashboard",
     page_icon=":bar_chart:",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-sns.set_theme(style="whitegrid")
+sns.set_theme(
+    style="whitegrid",
+    rc={
+        "figure.facecolor": "#ffffff",
+        "axes.facecolor": "#ffffff",
+        "axes.edgecolor": "#d5dde5",
+        "axes.labelcolor": "#183153",
+        "xtick.color": "#355070",
+        "ytick.color": "#355070",
+        "text.color": "#183153",
+        "axes.titlecolor": "#183153",
+        "grid.color": "#e7edf3",
+    },
+)
 
 PRIMARY_COLOR = "#1f4e79"
 SECONDARY_COLOR = "#2a9d8f"
@@ -26,6 +40,9 @@ percent_formatter = FuncFormatter(lambda x, pos: f"{x:.0%}")
 st.markdown(
     """
     <style>
+    .stApp {
+        color: #183153;
+    }
     [data-testid="stAppViewContainer"] {
         background-color: #f6f8fb;
     }
@@ -33,11 +50,104 @@ st.markdown(
         padding-top: 1.5rem;
         padding-bottom: 2rem;
     }
+    [data-testid="stHeader"] {
+        background: rgba(246, 248, 251, 0.95);
+    }
+    [data-testid="stSidebar"] {
+        background-color: #eaf0f6;
+        border-right: 1px solid #d7e0e8;
+    }
+    [data-testid="stSidebar"] * {
+        color: #183153 !important;
+    }
+    [data-testid="collapsedControl"] {
+        display: flex !important;
+        color: #183153 !important;
+    }
+    [data-testid="collapsedControl"] button {
+        background-color: #ffffff !important;
+        border: 1px solid #d7e0e8 !important;
+        border-radius: 999px !important;
+        color: #183153 !important;
+        box-shadow: 0 4px 12px rgba(24, 49, 83, 0.08);
+    }
     div[data-testid="stMetric"] {
         background-color: #ffffff;
         border: 1px solid #dce4ec;
         border-radius: 14px;
         padding: 0.8rem 1rem;
+        box-shadow: 0 4px 14px rgba(24, 49, 83, 0.06);
+    }
+    div[data-testid="stMetric"] label,
+    div[data-testid="stMetric"] [data-testid="stMetricLabel"],
+    div[data-testid="stMetric"] [data-testid="stMetricValue"],
+    div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
+        color: #183153 !important;
+    }
+    [data-testid="stExpander"] details {
+        background-color: #ffffff;
+        border: 1px solid #dce4ec;
+        border-radius: 12px;
+    }
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] p,
+    [data-testid="stExpander"] li {
+        color: #183153 !important;
+    }
+    .stMarkdown,
+    .stMarkdown p,
+    .stMarkdown li,
+    .stCaptionContainer,
+    .stText,
+    p,
+    label {
+        color: #2b3e50 !important;
+    }
+    [data-testid="stDataFrame"] {
+        background-color: #ffffff;
+        border: 1px solid #dce4ec;
+        border-radius: 12px;
+    }
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="base-input"] > div,
+    div[data-baseweb="input"] > div,
+    .stDateInput > div > div,
+    .stMultiSelect > div > div,
+    .stSelectbox > div > div,
+    .stTextInput > div > div,
+    .stNumberInput > div > div {
+        background-color: #ffffff !important;
+        color: #183153 !important;
+        border: 1px solid #c9d5e2 !important;
+    }
+    div[data-baseweb="select"] input,
+    div[data-baseweb="base-input"] input,
+    div[data-baseweb="input"] input,
+    .stDateInput input,
+    .stMultiSelect input,
+    .stSelectbox input,
+    .stTextInput input,
+    .stNumberInput input {
+        color: #183153 !important;
+        caret-color: #183153 !important;
+    }
+    div[role="listbox"],
+    ul[role="listbox"] {
+        background-color: #ffffff !important;
+        color: #183153 !important;
+        border: 1px solid #c9d5e2 !important;
+    }
+    div[role="option"] {
+        background-color: #ffffff !important;
+        color: #183153 !important;
+    }
+    div[role="option"]:hover {
+        background-color: #edf4fb !important;
+    }
+    .stDateInput button,
+    .stMultiSelect button,
+    .stSelectbox button {
+        color: #183153 !important;
     }
     h1, h2, h3 {
         color: #183153;
