@@ -1,10 +1,8 @@
 from pathlib import Path
 
-import matplotlib.pyplot as plt
+import altair as alt
 import pandas as pd
-import seaborn as sns
 import streamlit as st
-from matplotlib.ticker import FuncFormatter
 
 
 st.set_page_config(
@@ -14,144 +12,241 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-sns.set_theme(
-    style="whitegrid",
-    rc={
-        "figure.facecolor": "#ffffff",
-        "axes.facecolor": "#ffffff",
-        "axes.edgecolor": "#d5dde5",
-        "axes.labelcolor": "#183153",
-        "xtick.color": "#355070",
-        "ytick.color": "#355070",
-        "text.color": "#183153",
-        "axes.titlecolor": "#183153",
-        "grid.color": "#e7edf3",
-    },
-)
 
-PRIMARY_COLOR = "#1f4e79"
-SECONDARY_COLOR = "#2a9d8f"
-ALERT_COLOR = "#d1495b"
-
-currency_formatter = FuncFormatter(lambda x, pos: f"R${x:,.0f}")
-percent_formatter = FuncFormatter(lambda x, pos: f"{x:.0%}")
+PRIMARY_COLOR = "#2454A6"
+SECONDARY_COLOR = "#0F8B8D"
+ALERT_COLOR = "#C8465A"
+INK_COLOR = "#172033"
+MUTED_COLOR = "#667085"
+PANEL_BORDER = "#E3E8EF"
+PANEL_BG = "#FFFFFF"
+APP_BG = "#F4F7FB"
 
 
 st.markdown(
-    """
+    f"""
     <style>
-    .stApp {
-        color: #183153;
-    }
-    [data-testid="stAppViewContainer"] {
-        background-color: #f6f8fb;
-    }
-    .block-container {
-        padding-top: 1.5rem;
-        padding-bottom: 2rem;
-    }
-    [data-testid="stHeader"] {
-        background: rgba(246, 248, 251, 0.95);
-    }
-    [data-testid="stSidebar"] {
-        background-color: #eaf0f6;
-        border-right: 1px solid #d7e0e8;
-    }
-    [data-testid="stSidebar"] * {
-        color: #183153 !important;
-    }
-    [data-testid="collapsedControl"] {
-        display: flex !important;
-        color: #183153 !important;
-    }
-    [data-testid="collapsedControl"] button {
-        background-color: #ffffff !important;
-        border: 1px solid #d7e0e8 !important;
-        border-radius: 999px !important;
-        color: #183153 !important;
-        box-shadow: 0 4px 12px rgba(24, 49, 83, 0.08);
-    }
-    div[data-testid="stMetric"] {
-        background-color: #ffffff;
-        border: 1px solid #dce4ec;
-        border-radius: 14px;
-        padding: 0.8rem 1rem;
-        box-shadow: 0 4px 14px rgba(24, 49, 83, 0.06);
-    }
+    :root {{
+        --app-bg: {APP_BG};
+        --panel-bg: {PANEL_BG};
+        --panel-border: {PANEL_BORDER};
+        --ink: {INK_COLOR};
+        --muted: {MUTED_COLOR};
+        --primary: {PRIMARY_COLOR};
+        --secondary: {SECONDARY_COLOR};
+        --alert: {ALERT_COLOR};
+    }}
+
+    .stApp {{
+        color: var(--ink);
+        background: var(--app-bg);
+    }}
+
+    [data-testid="stAppViewContainer"] {{
+        background:
+            linear-gradient(180deg, #EEF4FF 0, #F7FAFC 320px, #F4F7FB 100%);
+    }}
+
+    [data-testid="stHeader"] {{
+        background: rgba(244, 247, 251, 0.82);
+        backdrop-filter: blur(12px);
+    }}
+
+    .block-container {{
+        max-width: 1320px;
+        padding: 1.1rem 2rem 2.4rem;
+    }}
+
+    h1, h2, h3, p, label, span, .stMarkdown {{
+        color: var(--ink);
+    }}
+
+    h1 {{
+        font-size: 2.35rem;
+        line-height: 1.08;
+        margin-bottom: 0.35rem;
+    }}
+
+    h2 {{
+        font-size: 1.35rem;
+        margin-top: 0.8rem;
+        margin-bottom: 0.45rem;
+    }}
+
+    h3 {{
+        font-size: 1.05rem;
+        margin-top: 0.55rem;
+    }}
+
+    .muted, .muted * {{
+        color: var(--muted) !important;
+    }}
+
+    .hero {{
+        padding: 1.15rem 0 0.65rem;
+    }}
+
+    .hero-kicker {{
+        width: fit-content;
+        padding: 0.28rem 0.62rem;
+        border: 1px solid #C9D8F2;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.72);
+        color: #2454A6;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        margin-bottom: 0.7rem;
+    }}
+
+    .hero-subtitle {{
+        max-width: 860px;
+        color: var(--muted);
+        font-size: 1.02rem;
+        line-height: 1.58;
+        margin-bottom: 0.35rem;
+    }}
+
+    div[data-testid="stMetric"] {{
+        min-height: 118px;
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+        padding: 0.95rem 1rem;
+        box-shadow: 0 14px 34px rgba(23, 32, 51, 0.07);
+    }}
+
     div[data-testid="stMetric"] label,
     div[data-testid="stMetric"] [data-testid="stMetricLabel"],
     div[data-testid="stMetric"] [data-testid="stMetricValue"],
-    div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
-        color: #183153 !important;
-    }
-    [data-testid="stExpander"] details {
-        background-color: #ffffff;
-        border: 1px solid #dce4ec;
-        border-radius: 12px;
-    }
-    [data-testid="stExpander"] summary,
-    [data-testid="stExpander"] p,
-    [data-testid="stExpander"] li {
-        color: #183153 !important;
-    }
-    .stMarkdown,
-    .stMarkdown p,
-    .stMarkdown li,
-    .stCaptionContainer,
-    .stText,
-    p,
-    label {
-        color: #2b3e50 !important;
-    }
-    [data-testid="stDataFrame"] {
-        background-color: #ffffff;
-        border: 1px solid #dce4ec;
-        border-radius: 12px;
-    }
+    div[data-testid="stMetric"] [data-testid="stMetricDelta"] {{
+        color: var(--ink) !important;
+    }}
+
+    div[data-testid="stMetric"] [data-testid="stMetricLabel"] {{
+        color: var(--muted) !important;
+        font-size: 0.86rem;
+    }}
+
+    div[data-testid="stMetric"] [data-testid="stMetricValue"] {{
+        font-size: 1.62rem;
+        letter-spacing: 0;
+    }}
+
+    .insight {{
+        background: #FFFFFF;
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+        padding: 0.95rem 1rem;
+        margin: 0.25rem 0 0.9rem;
+        box-shadow: 0 8px 22px rgba(23, 32, 51, 0.045);
+        color: var(--muted);
+        line-height: 1.55;
+    }}
+
+    .insight strong {{
+        color: var(--ink);
+        display: inline-block;
+        margin-bottom: 0.18rem;
+    }}
+
+    .section-note {{
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.55;
+        margin-top: -0.2rem;
+        margin-bottom: 0.8rem;
+    }}
+
+    [data-testid="stSidebar"] {{
+        background: #FFFFFF;
+        border-right: 1px solid var(--panel-border);
+    }}
+
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] span {{
+        color: var(--ink) !important;
+    }}
+
+    [data-testid="stSidebar"] .stMarkdown p {{
+        color: var(--muted) !important;
+        line-height: 1.48;
+    }}
+
+    [data-testid="stSidebar"] hr {{
+        margin: 1rem 0;
+        border-color: var(--panel-border);
+    }}
+
+    [data-testid="stSidebar"] [data-testid="stMetric"] {{
+        min-height: auto;
+        box-shadow: none;
+        background: #F8FAFC;
+    }}
+
     div[data-baseweb="select"] > div,
     div[data-baseweb="base-input"] > div,
     div[data-baseweb="input"] > div,
     .stDateInput > div > div,
     .stMultiSelect > div > div,
-    .stSelectbox > div > div,
-    .stTextInput > div > div,
-    .stNumberInput > div > div {
-        background-color: #ffffff !important;
-        color: #183153 !important;
-        border: 1px solid #c9d5e2 !important;
-    }
-    div[data-baseweb="select"] input,
-    div[data-baseweb="base-input"] input,
-    div[data-baseweb="input"] input,
-    .stDateInput input,
-    .stMultiSelect input,
-    .stSelectbox input,
-    .stTextInput input,
-    .stNumberInput input {
-        color: #183153 !important;
-        caret-color: #183153 !important;
-    }
+    .stRadio > div,
+    .stSelectbox > div > div {{
+        background-color: #FFFFFF !important;
+        border-color: #CBD5E1 !important;
+        color: var(--ink) !important;
+    }}
+
     div[role="listbox"],
-    ul[role="listbox"] {
-        background-color: #ffffff !important;
-        color: #183153 !important;
-        border: 1px solid #c9d5e2 !important;
-    }
-    div[role="option"] {
-        background-color: #ffffff !important;
-        color: #183153 !important;
-    }
-    div[role="option"]:hover {
-        background-color: #edf4fb !important;
-    }
-    .stDateInput button,
-    .stMultiSelect button,
-    .stSelectbox button {
-        color: #183153 !important;
-    }
-    h1, h2, h3 {
-        color: #183153;
-    }
+    ul[role="listbox"] {{
+        background-color: #FFFFFF !important;
+        border: 1px solid #CBD5E1 !important;
+    }}
+
+    div[role="option"] {{
+        color: var(--ink) !important;
+    }}
+
+    div[role="option"]:hover {{
+        background-color: #EEF4FF !important;
+    }}
+
+    [data-testid="stTabs"] button {{
+        color: var(--muted);
+        font-weight: 700;
+    }}
+
+    [data-testid="stTabs"] button[aria-selected="true"] {{
+        color: var(--primary);
+    }}
+
+    [data-testid="stDataFrame"],
+    [data-testid="stExpander"] details {{
+        background: #FFFFFF;
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+        overflow: hidden;
+    }}
+
+    [data-testid="stAlert"] {{
+        border-radius: 8px;
+    }}
+
+    @media (max-width: 760px) {{
+        .block-container {{
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }}
+        h1 {{
+            font-size: 1.85rem;
+        }}
+        div[data-testid="stMetric"] [data-testid="stMetricValue"] {{
+            font-size: 1.34rem;
+        }}
+    }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -217,11 +312,42 @@ def load_category_data() -> pd.DataFrame:
 
 
 def format_currency(value: float) -> str:
+    if pd.isna(value):
+        return "-"
+    return f"R${value:,.0f}"
+
+
+def format_currency_short(value: float) -> str:
+    if pd.isna(value):
+        return "-"
+    if abs(value) >= 1_000_000:
+        return f"R${value / 1_000_000:.2f}M"
+    if abs(value) >= 1_000:
+        return f"R${value / 1_000:.1f}K"
     return f"R${value:,.0f}"
 
 
 def format_percent(value: float) -> str:
     return f"{value:.1%}" if pd.notna(value) else "-"
+
+
+def format_number(value: float) -> str:
+    return f"{value:,.0f}" if pd.notna(value) else "-"
+
+
+def render_insight(text: str, color: str | None = None) -> None:
+    st.markdown(
+        f"""
+        <div class="insight">
+            {text}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def empty_state(message: str) -> None:
+    st.info(message)
 
 
 def filter_main_data(
@@ -243,18 +369,18 @@ def filter_main_data(
 
 def build_monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
-        return pd.DataFrame(columns=["order_purchase_month", "orders", "revenue"])
+        return pd.DataFrame(
+            columns=["order_purchase_month", "order_purchase_date", "orders", "revenue"]
+        )
 
     monthly = (
-        df.assign(
-            order_purchase_month=df["order_purchase_timestamp"].dt.to_period("M").astype(
-                str
-            )
-        )
-        .groupby("order_purchase_month", as_index=False)
+        df.assign(order_purchase_date=df["order_purchase_timestamp"].dt.to_period("M"))
+        .groupby("order_purchase_date", as_index=False)
         .agg(orders=("order_id", "nunique"), revenue=("revenue", "sum"))
-        .sort_values("order_purchase_month")
+        .sort_values("order_purchase_date")
     )
+    monthly["order_purchase_month"] = monthly["order_purchase_date"].astype(str)
+    monthly["order_purchase_date"] = monthly["order_purchase_date"].dt.to_timestamp()
     return monthly
 
 
@@ -276,7 +402,9 @@ def build_category_revenue(
 
 def build_late_by_state(delay_df: pd.DataFrame) -> pd.DataFrame:
     if delay_df.empty:
-        return pd.DataFrame(columns=["customer_state", "total_orders", "late_rate"])
+        return pd.DataFrame(
+            columns=["customer_state", "total_orders", "late_orders", "late_rate"]
+        )
 
     late_by_state = (
         delay_df.groupby("customer_state", as_index=False)
@@ -328,6 +456,100 @@ def build_customers_by_state(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def build_payment_mix(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame(columns=["payment_type_primary", "orders", "share"])
+
+    payment_mix = (
+        df.dropna(subset=["payment_type_primary"])
+        .groupby("payment_type_primary", as_index=False)
+        .agg(orders=("order_id", "nunique"))
+        .sort_values("orders", ascending=False)
+    )
+    total_orders = payment_mix["orders"].sum()
+    payment_mix["share"] = payment_mix["orders"] / total_orders if total_orders else 0
+    return payment_mix
+
+
+def build_city_customers(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame(columns=["customer_city", "customer_state", "customers"])
+
+    return (
+        df[["customer_unique_id", "customer_city", "customer_state"]]
+        .dropna()
+        .drop_duplicates()
+        .groupby(["customer_city", "customer_state"], as_index=False)
+        .agg(customers=("customer_unique_id", "nunique"))
+        .sort_values("customers", ascending=False)
+    )
+
+
+def make_monthly_chart(monthly_trend: pd.DataFrame, metric: str) -> alt.Chart:
+    titles = {"orders": "Jumlah pesanan", "revenue": "Revenue"}
+    axis = alt.Axis(
+        title=titles[metric],
+        format="$,.0s" if metric == "revenue" else ",.0f",
+    )
+
+    return (
+        alt.Chart(monthly_trend)
+        .mark_area(
+            line={"color": PRIMARY_COLOR if metric == "orders" else SECONDARY_COLOR},
+            color=PRIMARY_COLOR if metric == "orders" else SECONDARY_COLOR,
+            opacity=0.16,
+            interpolate="monotone",
+        )
+        .encode(
+            x=alt.X(
+                "order_purchase_date:T",
+                title="Bulan pembelian",
+                axis=alt.Axis(format="%b %Y", labelAngle=-35),
+            ),
+            y=alt.Y(f"{metric}:Q", title=titles[metric], axis=axis),
+            tooltip=[
+                alt.Tooltip("order_purchase_month:N", title="Bulan"),
+                alt.Tooltip("orders:Q", title="Pesanan", format=",.0f"),
+                alt.Tooltip("revenue:Q", title="Revenue", format="$,.0f"),
+            ],
+        )
+        .properties(height=320)
+    )
+
+
+def make_bar_chart(
+    data: pd.DataFrame,
+    category_col: str,
+    value_col: str,
+    title_col: str,
+    color: str,
+    value_format: str,
+    height: int = 360,
+) -> alt.Chart:
+    return (
+        alt.Chart(data)
+        .mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5, color=color)
+        .encode(
+            x=alt.X(
+                f"{value_col}:Q",
+                title=None,
+                axis=alt.Axis(format=value_format, grid=True),
+            ),
+            y=alt.Y(
+                f"{category_col}:N",
+                title=None,
+                sort="-x",
+                axis=alt.Axis(labelLimit=210),
+            ),
+            tooltip=[
+                alt.Tooltip(f"{title_col}:N", title="Kategori"),
+                alt.Tooltip(f"{value_col}:Q", title="Nilai", format=value_format),
+            ],
+        )
+        .properties(height=height)
+    )
+
+
 def main() -> None:
     main_data = load_main_data()
     category_data = load_category_data()
@@ -336,28 +558,20 @@ def main() -> None:
     max_date = main_data["order_purchase_timestamp"].max().date()
     state_options = sorted(main_data["customer_state"].dropna().unique().tolist())
 
-    st.title("Brazilian E-Commerce Dashboard")
-    st.caption(
-        "Dashboard ini merangkum tren pesanan, pendapatan, keterlambatan pengiriman, "
-        "dan persebaran pelanggan pada dataset Olist."
-    )
-
-    with st.expander("Business Questions"):
-        st.markdown(
-            """
-            1. Bagaimana tren jumlah pesanan dan pendapatan dari waktu ke waktu, serta kategori produk apa yang memberikan kontribusi terbesar terhadap pendapatan?
-            2. Seberapa sering terjadi keterlambatan pengiriman, wilayah mana yang paling sering mengalami keterlambatan, dan apakah keterlambatan tersebut berpengaruh terhadap penilaian pelanggan?
-            3. Wilayah mana yang memiliki jumlah pelanggan terbanyak?
-            """
-        )
-
     with st.sidebar:
-        st.header("Filter Data")
+        st.markdown("### Olist Dashboard")
+        st.markdown(
+            "Gunakan panel ini untuk mempersempit periode dan wilayah pelanggan. "
+            "Semua visual di kanan akan mengikuti filter yang aktif."
+        )
+        st.divider()
+
         selected_dates = st.date_input(
-            "Rentang tanggal pembelian",
+            "Periode pembelian",
             value=(min_date, max_date),
             min_value=min_date,
             max_value=max_date,
+            help="Tanggal berdasarkan order_purchase_timestamp.",
         )
 
         if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
@@ -365,10 +579,29 @@ def main() -> None:
         else:
             start_date = end_date = selected_dates
 
-        selected_states = st.multiselect(
-            "Pilih state",
-            options=state_options,
-            default=state_options,
+        state_scope = st.radio(
+            "Cakupan state",
+            options=["Semua state", "Pilih manual"],
+            horizontal=True,
+        )
+
+        if state_scope == "Semua state":
+            selected_states = state_options
+            st.caption(f"{len(state_options)} state aktif.")
+        else:
+            selected_states = st.multiselect(
+                "State yang dianalisis",
+                options=state_options,
+                default=state_options[:8],
+                help="Pilih beberapa state untuk membandingkan performa wilayah.",
+            )
+
+        st.divider()
+        st.markdown("#### Catatan data")
+        st.markdown(
+            "- Revenue memakai order berstatus delivered.\n"
+            "- Late rate dihitung dari selisih estimasi dan tanggal delivery.\n"
+            "- Rating memakai rata-rata review per order."
         )
 
     if not selected_states:
@@ -393,233 +626,402 @@ def main() -> None:
     late_by_state = build_late_by_state(filtered_delay)
     rating_by_delivery_status = build_rating_by_delivery_status(filtered_review)
     customers_by_state = build_customers_by_state(filtered_main)
+    customers_by_city = build_city_customers(filtered_main)
+    payment_mix = build_payment_mix(filtered_main)
 
     total_orders = filtered_main["order_id"].nunique()
+    delivered_orders = filtered_delivered["order_id"].nunique()
     total_revenue = filtered_delivered["revenue"].sum()
     late_rate = filtered_delay["is_late"].mean()
     avg_review = filtered_review["review_score_mean"].mean()
+    unique_customers = filtered_main["customer_unique_id"].nunique()
+    avg_order_value = total_revenue / delivered_orders if delivered_orders else 0
 
-    metric_cols = st.columns(4)
-    metric_cols[0].metric("Total Orders", f"{total_orders:,}")
-    metric_cols[1].metric("Revenue (Proxy)", format_currency(total_revenue))
-    metric_cols[2].metric("Late Delivery Rate", format_percent(late_rate))
-    metric_cols[3].metric(
-        "Average Review",
-        f"{avg_review:.2f}" if pd.notna(avg_review) else "-",
+    st.markdown(
+        """
+        <div class="hero">
+            <div class="hero-kicker">Brazilian E-Commerce Public Dataset by Olist</div>
+            <h1>Sales, Delivery, and Customer Dashboard</h1>
+            <p class="hero-subtitle">
+                Dashboard ini menyatukan tren penjualan, kualitas pengiriman, rating pelanggan,
+                dan persebaran wilayah agar performa bisnis bisa dibaca dari satu tempat.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    kpi_cols = st.columns(5)
+    kpi_cols[0].metric("Total Orders", format_number(total_orders))
+    kpi_cols[1].metric("Delivered Revenue", format_currency_short(total_revenue))
+    kpi_cols[2].metric("Avg Order Value", format_currency_short(avg_order_value))
+    kpi_cols[3].metric("Late Delivery Rate", format_percent(late_rate))
+    kpi_cols[4].metric(
+        "Average Review", f"{avg_review:.2f} / 5" if pd.notna(avg_review) else "-"
     )
 
     st.markdown(
         f"""
-        Filter aktif: **{start_date}** sampai **{end_date}** pada **{len(selected_states)} state**.
-        Revenue dihitung dari order delivered agar konsisten dengan analisis di notebook.
-        """
+        <p class="section-note">
+            Filter aktif: <strong>{start_date}</strong> sampai <strong>{end_date}</strong>,
+            <strong>{len(selected_states)}</strong> state, <strong>{format_number(unique_customers)}</strong>
+            pelanggan unik.
+        </p>
+        """,
+        unsafe_allow_html=True,
     )
 
-    insight_col_1, insight_col_2 = st.columns(2)
+    overview_tab, sales_tab, delivery_tab, customer_tab, data_tab = st.tabs(
+        ["Overview", "Sales", "Delivery", "Customers", "Data"]
+    )
 
-    with insight_col_1:
-        st.subheader("Pertanyaan 1: Tren dan Kontributor Pendapatan")
+    with overview_tab:
+        left, right = st.columns([1.35, 1])
 
-        if not monthly_trend.empty:
-            peak_month = monthly_trend.loc[monthly_trend["orders"].idxmax()]
-            st.write(
-                f"Puncak pesanan pada filter saat ini terjadi di **{peak_month['order_purchase_month']}** "
-                f"dengan **{int(peak_month['orders']):,} order** dan revenue sekitar "
-                f"**{format_currency(peak_month['revenue'])}**."
+        with left:
+            st.subheader("Tren pesanan bulanan")
+            st.markdown(
+                '<p class="section-note">Pergerakan volume order delivered dari bulan ke bulan.</p>',
+                unsafe_allow_html=True,
             )
-        else:
-            st.write("Belum ada data order delivered pada filter saat ini.")
+            if monthly_trend.empty:
+                empty_state("Belum ada order delivered pada filter saat ini.")
+            else:
+                st.altair_chart(
+                    make_monthly_chart(monthly_trend, "orders").configure_axis(
+                        labelColor=MUTED_COLOR,
+                        titleColor=MUTED_COLOR,
+                        gridColor="#E8EDF4",
+                    ),
+                    use_container_width=True,
+                )
 
-        fig, ax = plt.subplots(1, 2, figsize=(14, 4.5))
-
-        if not monthly_trend.empty:
-            sns.lineplot(
-                data=monthly_trend,
-                x="order_purchase_month",
-                y="orders",
-                marker="o",
-                color=PRIMARY_COLOR,
-                ax=ax[0],
+        with right:
+            st.subheader("Komposisi pembayaran")
+            st.markdown(
+                '<p class="section-note">Metode pembayaran paling sering dipakai pelanggan.</p>',
+                unsafe_allow_html=True,
             )
-            sns.lineplot(
-                data=monthly_trend,
-                x="order_purchase_month",
-                y="revenue",
-                marker="o",
-                color=SECONDARY_COLOR,
-                ax=ax[1],
+            if payment_mix.empty:
+                empty_state("Belum ada data pembayaran.")
+            else:
+                payment_chart = (
+                    alt.Chart(payment_mix)
+                    .mark_arc(innerRadius=68, outerRadius=118, stroke="#FFFFFF")
+                    .encode(
+                        theta=alt.Theta("orders:Q"),
+                        color=alt.Color(
+                            "payment_type_primary:N",
+                            title=None,
+                            scale=alt.Scale(
+                                range=[
+                                    PRIMARY_COLOR,
+                                    SECONDARY_COLOR,
+                                    "#F2A541",
+                                    ALERT_COLOR,
+                                    "#6C5CE7",
+                                ]
+                            ),
+                        ),
+                        tooltip=[
+                            alt.Tooltip(
+                                "payment_type_primary:N", title="Metode pembayaran"
+                            ),
+                            alt.Tooltip("orders:Q", title="Pesanan", format=",.0f"),
+                            alt.Tooltip("share:Q", title="Share", format=".1%"),
+                        ],
+                    )
+                    .properties(height=320)
+                )
+                st.altair_chart(payment_chart, use_container_width=True)
+
+        insight_cols = st.columns(3)
+        peak_month = (
+            monthly_trend.loc[monthly_trend["orders"].idxmax()]
+            if not monthly_trend.empty
+            else None
+        )
+        top_category = category_revenue.iloc[0] if not category_revenue.empty else None
+        top_state = customers_by_state.iloc[0] if not customers_by_state.empty else None
+
+        with insight_cols[0]:
+            render_insight(
+                f"<strong>Puncak order:</strong><br>{peak_month['order_purchase_month']} "
+                f"dengan {int(peak_month['orders']):,} order."
+                if peak_month is not None
+                else "<strong>Puncak order:</strong><br>Belum tersedia."
             )
-            ax[1].yaxis.set_major_formatter(currency_formatter)
-        else:
-            ax[0].text(0.5, 0.5, "Tidak ada data", ha="center", va="center")
-            ax[1].text(0.5, 0.5, "Tidak ada data", ha="center", va="center")
-
-        ax[0].set_title("Tren Jumlah Pesanan per Bulan")
-        ax[0].set_xlabel("Bulan")
-        ax[0].set_ylabel("Jumlah Pesanan")
-        ax[0].tick_params(axis="x", rotation=45)
-
-        ax[1].set_title("Tren Revenue per Bulan")
-        ax[1].set_xlabel("Bulan")
-        ax[1].set_ylabel("Revenue")
-        ax[1].tick_params(axis="x", rotation=45)
-
-        plt.tight_layout()
-        st.pyplot(fig, use_container_width=True)
-        plt.close(fig)
-
-        st.subheader("Kategori dengan Pendapatan Tertinggi")
-        fig, ax = plt.subplots(figsize=(8, 4.8))
-        top_categories = category_revenue.head(10)
-
-        if not top_categories.empty:
-            sns.barplot(
-                data=top_categories,
-                y="product_category_name_english",
-                x="revenue",
-                color=PRIMARY_COLOR,
-                ax=ax,
+        with insight_cols[1]:
+            render_insight(
+                f"<strong>Kategori terbesar:</strong><br>{top_category['product_category_name_english']} "
+                f"menghasilkan {format_currency_short(top_category['revenue'])}."
+                if top_category is not None
+                else "<strong>Kategori terbesar:</strong><br>Belum tersedia.",
+                SECONDARY_COLOR,
             )
-            ax.xaxis.set_major_formatter(currency_formatter)
-        else:
-            ax.text(0.5, 0.5, "Tidak ada data", ha="center", va="center")
+        with insight_cols[2]:
+            render_insight(
+                f"<strong>Basis pelanggan:</strong><br>{top_state['customer_state']} memimpin "
+                f"dengan {int(top_state['customers']):,} pelanggan unik."
+                if top_state is not None
+                else "<strong>Basis pelanggan:</strong><br>Belum tersedia.",
+                "#F2A541",
+            )
 
-        ax.set_title("Top 10 Kategori Produk berdasarkan Pendapatan")
-        ax.set_xlabel("Revenue dari Harga Item")
-        ax.set_ylabel("Kategori Produk")
-        plt.tight_layout()
-        st.pyplot(fig, use_container_width=True)
-        plt.close(fig)
+    with sales_tab:
+        st.subheader("Revenue dan kategori produk")
+        st.markdown(
+            '<p class="section-note">Tab ini menjawab pertanyaan bisnis pertama: tren sales dan kontributor revenue.</p>',
+            unsafe_allow_html=True,
+        )
 
-    with insight_col_2:
-        st.subheader("Pertanyaan 2: Keterlambatan dan Rating Pelanggan")
+        col_a, col_b = st.columns([1.1, 1])
+        with col_a:
+            if monthly_trend.empty:
+                empty_state("Belum ada revenue delivered pada filter saat ini.")
+            else:
+                st.altair_chart(
+                    make_monthly_chart(monthly_trend, "revenue").configure_axis(
+                        labelColor=MUTED_COLOR,
+                        titleColor=MUTED_COLOR,
+                        gridColor="#E8EDF4",
+                    ),
+                    use_container_width=True,
+                )
+
+        with col_b:
+            top_categories = category_revenue.head(10)
+            if top_categories.empty:
+                empty_state("Belum ada data kategori pada filter saat ini.")
+            else:
+                top_categories = top_categories.assign(
+                    category_label=top_categories["product_category_name_english"].str.replace(
+                        "_", " ", regex=False
+                    )
+                )
+                st.altair_chart(
+                    make_bar_chart(
+                        top_categories,
+                        "category_label",
+                        "revenue",
+                        "category_label",
+                        PRIMARY_COLOR,
+                        "$,.0s",
+                    ).configure_axis(
+                        labelColor=MUTED_COLOR,
+                        titleColor=MUTED_COLOR,
+                        gridColor="#E8EDF4",
+                    ),
+                    use_container_width=True,
+                )
+
+        if not category_revenue.empty:
+            category_share = category_revenue.iloc[0]["revenue"] / category_revenue[
+                "revenue"
+            ].sum()
+            render_insight(
+                f"<strong>Insight sales:</strong> kategori teratas menyumbang "
+                f"{format_percent(category_share)} dari revenue item pada filter aktif. "
+                "Ini membantu memisahkan kategori utama dari long-tail kategori lain."
+            )
+
+    with delivery_tab:
+        st.subheader("Keterlambatan pengiriman dan dampaknya ke rating")
+        st.markdown(
+            '<p class="section-note">Tab ini menjawab wilayah mana yang paling sering terlambat dan bagaimana rating pelanggan berubah.</p>',
+            unsafe_allow_html=True,
+        )
+
+        col_a, col_b = st.columns([1, 1])
+        with col_a:
+            top_late_states = late_by_state.head(10)
+            if top_late_states.empty:
+                empty_state("Data keterlambatan belum cukup untuk dihitung.")
+            else:
+                st.altair_chart(
+                    make_bar_chart(
+                        top_late_states,
+                        "customer_state",
+                        "late_rate",
+                        "customer_state",
+                        ALERT_COLOR,
+                        ".0%",
+                    ).encode(
+                        tooltip=[
+                            alt.Tooltip("customer_state:N", title="State"),
+                            alt.Tooltip("late_rate:Q", title="Late rate", format=".1%"),
+                            alt.Tooltip(
+                                "total_orders:Q", title="Total order", format=",.0f"
+                            ),
+                            alt.Tooltip(
+                                "late_orders:Q", title="Order terlambat", format=",.0f"
+                            ),
+                        ]
+                    ).configure_axis(
+                        labelColor=MUTED_COLOR,
+                        titleColor=MUTED_COLOR,
+                        gridColor="#E8EDF4",
+                    ),
+                    use_container_width=True,
+                )
+
+        with col_b:
+            if rating_by_delivery_status.empty:
+                empty_state("Belum ada data review untuk filter saat ini.")
+            else:
+                rating_chart = (
+                    alt.Chart(rating_by_delivery_status)
+                    .mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5)
+                    .encode(
+                        x=alt.X("delivery_status:N", title=None, sort=None),
+                        y=alt.Y(
+                            "avg_review:Q",
+                            title="Average review score",
+                            scale=alt.Scale(domain=[0, 5]),
+                        ),
+                        color=alt.Color(
+                            "delivery_status:N",
+                            title=None,
+                            scale=alt.Scale(
+                                domain=["Tepat waktu / lebih cepat", "Terlambat"],
+                                range=[SECONDARY_COLOR, ALERT_COLOR],
+                            ),
+                        ),
+                        tooltip=[
+                            alt.Tooltip("delivery_status:N", title="Status"),
+                            alt.Tooltip("avg_review:Q", title="Avg review", format=".2f"),
+                            alt.Tooltip(
+                                "order_count:Q", title="Jumlah order", format=",.0f"
+                            ),
+                        ],
+                    )
+                    .properties(height=360)
+                    .configure_axis(
+                        labelColor=MUTED_COLOR,
+                        titleColor=MUTED_COLOR,
+                        gridColor="#E8EDF4",
+                    )
+                    .configure_view(strokeWidth=0)
+                )
+                st.altair_chart(rating_chart, use_container_width=True)
 
         if not late_by_state.empty:
             highest_late_state = late_by_state.iloc[0]
-            st.write(
-                f"State dengan late rate tertinggi pada filter saat ini adalah **{highest_late_state['customer_state']}** "
-                f"dengan tingkat keterlambatan **{highest_late_state['late_rate']:.1%}**."
+            render_insight(
+                f"<strong>Insight delivery:</strong> {highest_late_state['customer_state']} "
+                f"memiliki late rate tertinggi sebesar {format_percent(highest_late_state['late_rate'])} "
+                f"dari {int(highest_late_state['total_orders']):,} order delivered yang punya data estimasi.",
+                ALERT_COLOR,
             )
-        else:
-            st.write("Data keterlambatan belum cukup untuk dihitung pada filter saat ini.")
 
-        fig, ax = plt.subplots(figsize=(8, 4.8))
-        top_late_states = late_by_state.head(10)
-
-        if not top_late_states.empty:
-            sns.barplot(
-                data=top_late_states,
-                y="customer_state",
-                x="late_rate",
-                color=ALERT_COLOR,
-                ax=ax,
-            )
-            ax.xaxis.set_major_formatter(percent_formatter)
-        else:
-            ax.text(0.5, 0.5, "Tidak ada data", ha="center", va="center")
-
-        ax.set_title("Top 10 State dengan Late Rate Tertinggi")
-        ax.set_xlabel("Late Rate")
-        ax.set_ylabel("State")
-        plt.tight_layout()
-        st.pyplot(fig, use_container_width=True)
-        plt.close(fig)
-
-        fig, ax = plt.subplots(figsize=(8, 4.8))
-        review_box = filtered_review.assign(
-            delivery_status=lambda df: df["is_late"].map(
-                {
-                    True: "Terlambat",
-                    False: "Tepat waktu / lebih cepat",
-                }
-            )
+    with customer_tab:
+        st.subheader("Persebaran pelanggan")
+        st.markdown(
+            '<p class="section-note">Tab ini memperlihatkan state dan kota dengan pelanggan unik terbanyak.</p>',
+            unsafe_allow_html=True,
         )
 
-        if not review_box.empty:
-            sns.boxplot(
-                data=review_box,
-                x="delivery_status",
-                y="review_score_mean",
-                hue="delivery_status",
-                palette={
-                    "Tepat waktu / lebih cepat": SECONDARY_COLOR,
-                    "Terlambat": ALERT_COLOR,
-                },
-                dodge=False,
-                ax=ax,
+        col_a, col_b = st.columns([1, 1])
+        with col_a:
+            top_customer_states = customers_by_state.head(10)
+            if top_customer_states.empty:
+                empty_state("Belum ada data pelanggan pada filter saat ini.")
+            else:
+                st.altair_chart(
+                    make_bar_chart(
+                        top_customer_states,
+                        "customer_state",
+                        "customers",
+                        "customer_state",
+                        SECONDARY_COLOR,
+                        ",.0f",
+                    ).configure_axis(
+                        labelColor=MUTED_COLOR,
+                        titleColor=MUTED_COLOR,
+                        gridColor="#E8EDF4",
+                    ),
+                    use_container_width=True,
+                )
+
+        with col_b:
+            top_customer_cities = customers_by_city.head(10).assign(
+                city_label=lambda df: df["customer_city"].str.title()
+                + ", "
+                + df["customer_state"]
             )
-            legend = ax.get_legend()
-            if legend is not None:
-                legend.remove()
-        else:
-            ax.text(0.5, 0.5, "Tidak ada data", ha="center", va="center")
+            if top_customer_cities.empty:
+                empty_state("Belum ada data kota pada filter saat ini.")
+            else:
+                st.altair_chart(
+                    make_bar_chart(
+                        top_customer_cities,
+                        "city_label",
+                        "customers",
+                        "city_label",
+                        PRIMARY_COLOR,
+                        ",.0f",
+                    ).configure_axis(
+                        labelColor=MUTED_COLOR,
+                        titleColor=MUTED_COLOR,
+                        gridColor="#E8EDF4",
+                    ),
+                    use_container_width=True,
+                )
 
-        ax.set_title("Sebaran Rating berdasarkan Status Pengiriman")
-        ax.set_xlabel("Status Pengiriman")
-        ax.set_ylabel("Review Score")
-        ax.set_ylim(0, 5.2)
-        plt.tight_layout()
-        st.pyplot(fig, use_container_width=True)
-        plt.close(fig)
+        if not customers_by_state.empty:
+            top_customer_state = customers_by_state.iloc[0]
+            render_insight(
+                f"<strong>Insight pelanggan:</strong> {top_customer_state['customer_state']} "
+                f"adalah state dengan pelanggan unik terbanyak, yaitu "
+                f"{int(top_customer_state['customers']):,} pelanggan pada filter aktif.",
+                SECONDARY_COLOR,
+            )
 
-    st.subheader("Pertanyaan 3: Wilayah dengan Pelanggan Terbanyak")
-
-    top_customer_states = customers_by_state.head(10)
-    if not top_customer_states.empty:
-        top_customer_state = top_customer_states.iloc[0]
-        st.write(
-            f"State dengan pelanggan unik terbanyak pada filter saat ini adalah **{top_customer_state['customer_state']}** "
-            f"dengan **{int(top_customer_state['customers']):,} pelanggan**."
-        )
-    else:
-        st.write("Belum ada data pelanggan pada filter saat ini.")
-
-    fig, ax = plt.subplots(figsize=(10, 4.8))
-    if not top_customer_states.empty:
-        sns.barplot(
-            data=top_customer_states,
-            x="customer_state",
-            y="customers",
-            color=PRIMARY_COLOR,
-            ax=ax,
-        )
-    else:
-        ax.text(0.5, 0.5, "Tidak ada data", ha="center", va="center")
-
-    ax.set_title("Top 10 State dengan Pelanggan Terbanyak")
-    ax.set_xlabel("State")
-    ax.set_ylabel("Jumlah Pelanggan Unik")
-    plt.tight_layout()
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
-
-    st.subheader("Tabel Ringkasan")
-    table_col_1, table_col_2 = st.columns(2)
-
-    with table_col_1:
-        st.dataframe(
-            monthly_trend.rename(
-                columns={
-                    "order_purchase_month": "Month",
-                    "orders": "Orders",
-                    "revenue": "Revenue",
-                }
-            ),
-            use_container_width=True,
+    with data_tab:
+        st.subheader("Tabel ringkasan")
+        st.markdown(
+            '<p class="section-note">Gunakan tabel ini untuk validasi angka chart atau eksplorasi cepat.</p>',
+            unsafe_allow_html=True,
         )
 
-    with table_col_2:
-        st.dataframe(
-            late_by_state.head(10).rename(
+        table_col_1, table_col_2 = st.columns(2)
+        with table_col_1:
+            st.markdown("#### Monthly trend")
+            st.dataframe(
+                monthly_trend[["order_purchase_month", "orders", "revenue"]]
+                .rename(
+                    columns={
+                        "order_purchase_month": "Month",
+                        "orders": "Orders",
+                        "revenue": "Revenue",
+                    }
+                )
+                .style.format({"Orders": "{:,.0f}", "Revenue": "R${:,.0f}"}),
+                use_container_width=True,
+                height=360,
+            )
+
+        with table_col_2:
+            st.markdown("#### Late rate by state")
+            late_table = late_by_state.head(15).rename(
                 columns={
                     "customer_state": "State",
                     "total_orders": "Orders",
                     "late_orders": "Late Orders",
                     "late_rate": "Late Rate",
                 }
-            ),
-            use_container_width=True,
-        )
+            )
+            st.dataframe(
+                late_table.style.format(
+                    {
+                        "Orders": "{:,.0f}",
+                        "Late Orders": "{:,.0f}",
+                        "Late Rate": "{:.1%}",
+                    }
+                ),
+                use_container_width=True,
+                height=360,
+            )
 
 
 if __name__ == "__main__":
